@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import numpy as np
 
-st.set_page_config(page_title="Amazon Products Dashboard", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Amazon Products Dashboard", layout="wide")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('amazon.csv')  # Fixed path for Streamlit Cloud
+    df = pd.read_csv('amazon.csv')
     df['discounted_price'] = df['discounted_price'].str.replace('₹', '').str.replace(',', '').astype(float)
     df['actual_price'] = df['actual_price'].str.replace('₹', '').str.replace(',', '').astype(float)
     df['discount_percentage'] = df['discount_percentage'].str.replace('%', '').astype(float)
@@ -23,7 +22,7 @@ st.markdown("<h1 style='text-align: center; color: #FF69B4;'>🛒 Interactive Am
 
 # Category Filter
 categories = ['All Categories'] + list(df['main_category'].unique())
-selected_category = st.selectbox("🔽 Filter by Category:", categories, key="category_filter")
+selected_category = st.selectbox("🔽 Filter by Category:", categories)
 
 # Filter data
 if selected_category == 'All Categories':
@@ -63,36 +62,48 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Charts
+# Charts using matplotlib
 col1, col2 = st.columns(2)
 
 with col1:
     # Top Categories
     if len(filtered_df) > 0:
+        fig1, ax1 = plt.subplots(figsize=(8, 6))
         cat_counts = filtered_df['main_category'].value_counts().head(5)
-        fig1 = px.bar(x=cat_counts.index, y=cat_counts.values, 
-                     title="Top Categories", color_discrete_sequence=['#FF69B4'])
-        fig1.update_layout(xaxis_title="Category", yaxis_title="Count")
-        st.plotly_chart(fig1, use_container_width=True)
+        ax1.bar(range(len(cat_counts)), cat_counts.values, color='hotpink')
+        ax1.set_title('Top Categories', fontsize=16, fontweight='bold')
+        ax1.set_xticks(range(len(cat_counts)))
+        ax1.set_xticklabels(cat_counts.index, rotation=45, ha='right')
+        ax1.set_ylabel('Count')
+        plt.tight_layout()
+        st.pyplot(fig1)
     
     # Average Price by Category
     if len(filtered_df) > 0:
+        fig3, ax3 = plt.subplots(figsize=(8, 6))
         cat_prices = filtered_df.groupby('main_category')['discounted_price'].mean().sort_values(ascending=False).head(5)
-        fig3 = px.bar(x=cat_prices.index, y=cat_prices.values,
-                     title="Avg Price by Category", color_discrete_sequence=['#FFB6C1'])
-        fig3.update_layout(xaxis_title="Category", yaxis_title="Avg Price (₹)")
-        st.plotly_chart(fig3, use_container_width=True)
+        ax3.bar(range(len(cat_prices)), cat_prices.values, color='lightpink')
+        ax3.set_title('Avg Price by Category', fontsize=16, fontweight='bold')
+        ax3.set_xticks(range(len(cat_prices)))
+        ax3.set_xticklabels(cat_prices.index, rotation=45, ha='right')
+        ax3.set_ylabel('Avg Price (₹)')
+        plt.tight_layout()
+        st.pyplot(fig3)
 
 with col2:
     # Rating Distribution
     if len(filtered_df) > 0:
-        fig2 = px.histogram(filtered_df, x='clean_rating', nbins=20,
-                           title="Rating Distribution", color_discrete_sequence=['#FF1493'])
-        fig2.update_layout(xaxis_title="Rating", yaxis_title="Count")
-        st.plotly_chart(fig2, use_container_width=True)
+        fig2, ax2 = plt.subplots(figsize=(8, 6))
+        ax2.hist(filtered_df['clean_rating'].dropna(), bins=20, color='deeppink', alpha=0.7)
+        ax2.set_title('Rating Distribution', fontsize=16, fontweight='bold')
+        ax2.set_xlabel('Rating')
+        ax2.set_ylabel('Count')
+        plt.tight_layout()
+        st.pyplot(fig2)
     
     # Price Range Distribution
     if len(filtered_df) > 0:
+        fig4, ax4 = plt.subplots(figsize=(8, 6))
         price_ranges = ['<₹500', '₹500-2K', '₹2K-10K', '>₹10K']
         counts = [
             len(filtered_df[filtered_df['discounted_price'] < 500]),
@@ -100,18 +111,22 @@ with col2:
             len(filtered_df[(filtered_df['discounted_price'] >= 2000) & (filtered_df['discounted_price'] < 10000)]),
             len(filtered_df[filtered_df['discounted_price'] >= 10000])
         ]
-        fig4 = px.pie(values=counts, names=price_ranges, title="Price Range Distribution",
-                     color_discrete_sequence=['#FFC0CB', '#FF69B4', '#FF1493', '#C71585'])
-        st.plotly_chart(fig4, use_container_width=True)
+        colors = ['pink', 'hotpink', 'deeppink', 'mediumvioletred']
+        ax4.pie(counts, labels=price_ranges, autopct='%1.1f%%', colors=colors)
+        ax4.set_title('Price Range Distribution', fontsize=16, fontweight='bold')
+        st.pyplot(fig4)
 
 # Discount vs Price Scatter Plot
 if len(filtered_df) > 0:
-    fig5 = px.scatter(filtered_df, x='discounted_price', y='discount_percentage',
-                     title="Discount vs Price", color_discrete_sequence=['#DB7093'])
-    fig5.update_layout(xaxis_title="Price (₹)", yaxis_title="Discount %")
-    st.plotly_chart(fig5, use_container_width=True)
+    fig5, ax5 = plt.subplots(figsize=(12, 6))
+    ax5.scatter(filtered_df['discounted_price'], filtered_df['discount_percentage'], alpha=0.6, color='mediumvioletred')
+    ax5.set_title('Discount vs Price', fontsize=16, fontweight='bold')
+    ax5.set_xlabel('Price (₹)')
+    ax5.set_ylabel('Discount %')
+    plt.tight_layout()
+    st.pyplot(fig5)
 
-# Summary Box
+# Summary
 st.markdown("### 📊 Detailed Insights")
 if len(filtered_df) > 0:
     col1, col2 = st.columns(2)
@@ -135,9 +150,6 @@ if len(filtered_df) > 0:
         
         **Current Filter:** {selected_category}
         """)
-else:
-    st.warning("No data available for selected filter")
 
-# Footer
 st.markdown("---")
 st.markdown("<p style='text-align: center; color: #FF69B4;'>📈 Amazon Products Analytics Dashboard</p>", unsafe_allow_html=True)
