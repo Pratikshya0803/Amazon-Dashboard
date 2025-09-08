@@ -8,7 +8,7 @@ st.set_page_config(page_title="Amazon Products Dashboard", layout="wide", initia
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('/mnt/c/Users/prava/Downloads/amazon.csv')
+    df = pd.read_csv('amazon.csv')  # Fixed path for Streamlit Cloud
     df['discounted_price'] = df['discounted_price'].str.replace('₹', '').str.replace(',', '').astype(float)
     df['actual_price'] = df['actual_price'].str.replace('₹', '').str.replace(',', '').astype(float)
     df['discount_percentage'] = df['discount_percentage'].str.replace('%', '').astype(float)
