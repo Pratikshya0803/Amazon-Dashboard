@@ -18,15 +18,26 @@ df = load_data()
 # Title
 st.markdown("<h1 style='text-align: center; color: #FF69B4;'>🛒 Interactive Amazon Products Dashboard <span style='font-size: 14px; font-style: italic; color: #888;'>by Pratikshya Priyadarshini</span></h1>", unsafe_allow_html=True)
 
-# Category Filter
-categories = ['All Categories'] + list(df['main_category'].unique())
-selected_category = st.selectbox("🔽 Filter by Category:", categories)
+# Filters
+col1, col2 = st.columns(2)
+
+with col1:
+    categories = ['All Categories'] + list(df['main_category'].unique())
+    selected_category = st.selectbox("🔽 Filter by Category:", categories)
+
+with col2:
+    rating_options = ['All Ratings', '4+ Stars', '3+ Stars', '2+ Stars', '1+ Stars']
+    selected_rating = st.selectbox("⭐ Filter by Rating:", rating_options)
 
 # Filter data
-if selected_category == 'All Categories':
-    filtered_df = df
-else:
-    filtered_df = df[df['main_category'] == selected_category]
+filtered_df = df.copy()
+
+if selected_category != 'All Categories':
+    filtered_df = filtered_df[filtered_df['main_category'] == selected_category]
+
+if selected_rating != 'All Ratings':
+    rating_threshold = float(selected_rating.split('+')[0])
+    filtered_df = filtered_df[filtered_df['clean_rating'] >= rating_threshold]
 
 # Key Insights Boxes
 col1, col2, col3 = st.columns(3)
@@ -127,7 +138,9 @@ if len(filtered_df) > 0:
         - Total Categories: **{filtered_df['main_category'].nunique()}**
         - Average Discount: **{filtered_df['discount_percentage'].mean():.1f}%**
         
-        **🔍 Current Filter:** **{selected_category}**
+        **🔍 Active Filters:** 
+        - Category: **{selected_category}**
+        - Rating: **{selected_rating}**
         """)
 else:
     st.warning("No data available for selected filter")
