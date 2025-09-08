@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 
 st.set_page_config(page_title="Amazon Products Dashboard", layout="wide")
 
@@ -62,94 +60,78 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Charts using matplotlib
+# Charts using Streamlit built-in functions
 col1, col2 = st.columns(2)
 
 with col1:
     # Top Categories
     if len(filtered_df) > 0:
-        fig1, ax1 = plt.subplots(figsize=(8, 6))
+        st.subheader("📊 Top Categories")
         cat_counts = filtered_df['main_category'].value_counts().head(5)
-        ax1.bar(range(len(cat_counts)), cat_counts.values, color='hotpink')
-        ax1.set_title('Top Categories', fontsize=16, fontweight='bold')
-        ax1.set_xticks(range(len(cat_counts)))
-        ax1.set_xticklabels(cat_counts.index, rotation=45, ha='right')
-        ax1.set_ylabel('Count')
-        plt.tight_layout()
-        st.pyplot(fig1)
+        st.bar_chart(cat_counts)
     
     # Average Price by Category
     if len(filtered_df) > 0:
-        fig3, ax3 = plt.subplots(figsize=(8, 6))
+        st.subheader("💰 Avg Price by Category")
         cat_prices = filtered_df.groupby('main_category')['discounted_price'].mean().sort_values(ascending=False).head(5)
-        ax3.bar(range(len(cat_prices)), cat_prices.values, color='lightpink')
-        ax3.set_title('Avg Price by Category', fontsize=16, fontweight='bold')
-        ax3.set_xticks(range(len(cat_prices)))
-        ax3.set_xticklabels(cat_prices.index, rotation=45, ha='right')
-        ax3.set_ylabel('Avg Price (₹)')
-        plt.tight_layout()
-        st.pyplot(fig3)
+        st.bar_chart(cat_prices)
 
 with col2:
     # Rating Distribution
     if len(filtered_df) > 0:
-        fig2, ax2 = plt.subplots(figsize=(8, 6))
-        ax2.hist(filtered_df['clean_rating'].dropna(), bins=20, color='deeppink', alpha=0.7)
-        ax2.set_title('Rating Distribution', fontsize=16, fontweight='bold')
-        ax2.set_xlabel('Rating')
-        ax2.set_ylabel('Count')
-        plt.tight_layout()
-        st.pyplot(fig2)
+        st.subheader("⭐ Rating Distribution")
+        rating_hist = filtered_df['clean_rating'].value_counts().sort_index()
+        st.bar_chart(rating_hist)
     
-    # Price Range Distribution
+    # Discount vs Price Scatter
     if len(filtered_df) > 0:
-        fig4, ax4 = plt.subplots(figsize=(8, 6))
-        price_ranges = ['<₹500', '₹500-2K', '₹2K-10K', '>₹10K']
-        counts = [
-            len(filtered_df[filtered_df['discounted_price'] < 500]),
-            len(filtered_df[(filtered_df['discounted_price'] >= 500) & (filtered_df['discounted_price'] < 2000)]),
-            len(filtered_df[(filtered_df['discounted_price'] >= 2000) & (filtered_df['discounted_price'] < 10000)]),
-            len(filtered_df[filtered_df['discounted_price'] >= 10000])
-        ]
-        colors = ['pink', 'hotpink', 'deeppink', 'mediumvioletred']
-        ax4.pie(counts, labels=price_ranges, autopct='%1.1f%%', colors=colors)
-        ax4.set_title('Price Range Distribution', fontsize=16, fontweight='bold')
-        st.pyplot(fig4)
+        st.subheader("🎯 Discount vs Price")
+        chart_data = filtered_df[['discounted_price', 'discount_percentage']].dropna()
+        st.scatter_chart(chart_data.set_index('discounted_price'))
 
-# Discount vs Price Scatter Plot
+# Price Range Analysis
 if len(filtered_df) > 0:
-    fig5, ax5 = plt.subplots(figsize=(12, 6))
-    ax5.scatter(filtered_df['discounted_price'], filtered_df['discount_percentage'], alpha=0.6, color='mediumvioletred')
-    ax5.set_title('Discount vs Price', fontsize=16, fontweight='bold')
-    ax5.set_xlabel('Price (₹)')
-    ax5.set_ylabel('Discount %')
-    plt.tight_layout()
-    st.pyplot(fig5)
+    st.subheader("💸 Price Range Analysis")
+    price_ranges = {
+        'Under ₹500': len(filtered_df[filtered_df['discounted_price'] < 500]),
+        '₹500-2000': len(filtered_df[(filtered_df['discounted_price'] >= 500) & (filtered_df['discounted_price'] < 2000)]),
+        '₹2000-10000': len(filtered_df[(filtered_df['discounted_price'] >= 2000) & (filtered_df['discounted_price'] < 10000)]),
+        'Above ₹10000': len(filtered_df[filtered_df['discounted_price'] >= 10000])
+    }
+    price_df = pd.DataFrame(list(price_ranges.items()), columns=['Range', 'Count'])
+    st.bar_chart(price_df.set_index('Range'))
 
 # Summary
+st.markdown("---")
 st.markdown("### 📊 Detailed Insights")
+
 if len(filtered_df) > 0:
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown(f"""
-        **Market Segments:**
-        - Budget (<₹500): {len(filtered_df[filtered_df['discounted_price'] < 500])} products
-        - Premium (>₹10K): {len(filtered_df[filtered_df['discounted_price'] >= 10000])} products
+        **📈 Market Segments:**
+        - Budget (<₹500): **{len(filtered_df[filtered_df['discounted_price'] < 500])}** products
+        - Premium (>₹10K): **{len(filtered_df[filtered_df['discounted_price'] >= 10000])}** products
         
-        **Price Range:**
-        - Min: ₹{filtered_df['discounted_price'].min():.0f}
-        - Max: ₹{filtered_df['discounted_price'].max():,.0f}
+        **💵 Price Range:**
+        - Min: **₹{filtered_df['discounted_price'].min():.0f}**
+        - Max: **₹{filtered_df['discounted_price'].max():,.0f}**
+        - Average: **₹{filtered_df['discounted_price'].mean():.0f}**
         """)
     
     with col2:
         st.markdown(f"""
-        **Quality Score:**
-        - Average Rating: {filtered_df['clean_rating'].mean():.1f}/5
-        - Categories: {filtered_df['main_category'].nunique()} total
+        **⭐ Quality Metrics:**
+        - Average Rating: **{filtered_df['clean_rating'].mean():.1f}/5**
+        - Total Categories: **{filtered_df['main_category'].nunique()}**
+        - Average Discount: **{filtered_df['discount_percentage'].mean():.1f}%**
         
-        **Current Filter:** {selected_category}
+        **🔍 Current Filter:** **{selected_category}**
         """)
+else:
+    st.warning("No data available for selected filter")
 
+# Footer
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #FF69B4;'>📈 Amazon Products Analytics Dashboard</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #FF69B4; font-size: 18px;'>📈 Amazon Products Analytics Dashboard</p>", unsafe_allow_html=True)
