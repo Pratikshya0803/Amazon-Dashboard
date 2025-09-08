@@ -16,7 +16,7 @@ def load_data():
 df = load_data()
 
 # Title
-st.markdown("<h1 style='text-align: center; color: #FF69B4;'>🛒 Interactive Amazon Products Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #FF69B4;'>🛒 Interactive Amazon Products Dashboard <span style='font-size: 14px; font-style: italic; color: #888;'>by Pratikshya Priyadarshini</span></h1>", unsafe_allow_html=True)
 
 # Category Filter
 categories = ['All Categories'] + list(df['main_category'].unique())
